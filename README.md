@@ -28,7 +28,7 @@
 
 3. **Attach to your Nginx:**
 
-   Update your Nginx config to forward requests to PySecWAF.
+   Update your Nginx config to forward requests to SecEdge.
 
    ```nginx
    server {
