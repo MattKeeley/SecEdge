@@ -1,31 +1,34 @@
+# main.py
 from flask import Flask, request, abort
-from waf.waf_engine import WAFEngine
-from waf.database import Database
-from waf.rules import SQLInjectionRule, XSSRule
-from waf.nginx_integration import NginxModule
+from waf.rules import check_all_rules
+from waf.ip_lists import load_ip_list, allow_list, deny_list
 
 app = Flask(__name__)
-app.logger.setLevel('DEBUG')
 
-database = Database()
-waf_engine = WAFEngine()
-waf_engine.load_rules(database.get_rules() + [SQLInjectionRule(), XSSRule])
-waf_engine.load_rate_limits(database.get_rate_limits())
-nginx_module = NginxModule(waf_engine)
 
-@app.route('/')
+# WAF middleware
+@app.before_request
+def waf_middleware():
+    client_ip = request.remote_addr
+
+    # Check IP against deny list
+    if client_ip in deny_list:
+        abort(406)  # Block the request directly
+
+    # Check IP against allow list
+    if client_ip in allow_list:
+        return  # Allow the request, skip further rules
+
+    rule_error_code = check_all_rules(request)
+    if rule_error_code != 200:
+        abort(rule_error_code)
+
+
+# Your main route
+@app.route("/")
 def index():
-    test_param = request.args.get('test', '')
-    app.logger.info(f"Received request data: {test_param}")
+    return "Hello, World!"
 
-    result = nginx_module.handle_request(test_param)
 
-    if result == "Blocked by WAF":
-        app.logger.warning("Request blocked by WAF")
-        abort(406)
-
-    app.logger.info(f"Response: {result}")
-    return f"Response: {result}"
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
