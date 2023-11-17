@@ -1,3 +1,4 @@
+# docker-compose.yml
 version: "3"
 services:
   web:
@@ -5,3 +6,12 @@ services:
       context: .
     ports:
       - "3000:5000"
+    depends_on:
+      - redis
+    environment:
+      REDIS_URL: "redis://redis:6379/0"
+
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379"

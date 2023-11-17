@@ -19,15 +19,25 @@ def waf_middleware():
     if client_ip in allow_list:
         return  # Allow the request, skip further rules
 
+    # Check agains security_rules, path_rules, and rate_limit_rules.
     rule_error_code = check_all_rules(request)
-    if rule_error_code != 200:
-        abort(rule_error_code)
+
+    if rule_error_code is not None:
+        abort(rule_error_code)  # Abort with the specified HTTP status code
+    else:
+        return  # Continue processing the request with a 200 OK response
 
 
 # Your main route
 @app.route("/")
 def index():
-    return "Hello, World!"
+    return f"Hello, {request.remote_addr}!"
+
+
+# Your main route
+@app.route("/public")
+def public():
+    return f"Hello, {request.remote_addr}! Welcome to Public Route"
 
 
 if __name__ == "__main__":

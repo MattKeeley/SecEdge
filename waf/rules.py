@@ -1,7 +1,10 @@
 # waf/rules.py
 from waf.security_rules import xss_rule, sql_injection_rule, path_traversal_rule
 from waf.path_rules import block_example_path, block_admin_path, block_yeet_path
-from waf.rate_limit_rules import check_rate_limit
+from waf.rate_limit_rules import check_custom_rate_limit
+import redis
+
+redis_client = redis.StrictRedis(host="redis", port=6379, db=0)
 
 
 def check_all_rules(request):
@@ -13,6 +16,6 @@ def check_all_rules(request):
         or block_yeet_path(request)
     ):
         return 403  # HTTP 403 - Forbidden
-    if check_rate_limit(request):
-        return 429  # HTTP 429 - Too Many Requests
-    return 200  # HTTP 200 - OK (No rules violated)
+    if check_custom_rate_limit(request, redis_client):
+        return 429  # Custom rate limit exceeded
+    return None  # None (No rules violated)
