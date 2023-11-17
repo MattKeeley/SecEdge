@@ -19,7 +19,7 @@ def waf_middleware():
     if client_ip in allow_list:
         return  # Allow the request, skip further rules
 
-    # Check agains security_rules, path_rules, and rate_limit_rules.
+    # Check against security_rules, path_rules, and rate_limit_rules.
     rule_error_code = check_all_rules(request)
 
     if rule_error_code is not None:
